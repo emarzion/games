@@ -1,0 +1,12 @@
+.lia.cache
+.Makefile.d
+_CoqProject
+Makefile
+Makefile.conf
+*.aux
+*.glob
+*.vo
+*.vok
+*.vos
+*.v#
+_build

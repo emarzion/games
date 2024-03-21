@@ -1,0 +1,24 @@
+opam-version: "2.0"
+maintainer: "emarzion@gmail.com"
+version: "dev"
+
+homepage: "https://github.com/emarzion/games"
+dev-repo: "git+https://github.com/emarzion/games.git"
+bug-reports: "https://github.com/emarzion/games/issues"
+license: "GPL"
+
+synopsis: "Games library"
+
+build: [
+  [dune build]
+]
+install: [dune install]
+
+depends: [
+  "ocaml" {>= "4.14.0"}
+  "coq" {>= "8.15.2"}
+]
+
+authors: [
+  "Evan Marzion"
+]
