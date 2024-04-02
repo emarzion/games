@@ -25,7 +25,6 @@ Record Game : Type := {
     enum_moves b = nil -> exists res, atomic_res b = Some res
   }.
 
-Arguments GameState _ : assert.
 Arguments Move {_} _.
 
 Arguments to_play {_} _.

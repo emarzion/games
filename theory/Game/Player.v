@@ -4,8 +4,7 @@ Inductive Player :=
   | White : Player
   | Black : Player.
 
-#[export]
-Instance Player_Discrete : Discrete Player.
+Global Instance Player_Discrete : Discrete Player.
 Proof.
   constructor; unfold decision; decide equality.
 Defined.
