@@ -2,7 +2,7 @@ Require Import Games.Game.Player.
 Require Import Games.Game.Game.
 Require Import Games.Game.Win.
 
-Inductive forces {G : Game} (p : Player) (P : GameState G -> Prop)
+Inductive forces {G : Game} (p : Player) (P : GameState G -> Type)
   : GameState G -> Type :=
   | atom_force : forall b, P b -> forces p P b
   | eloise_force : forall b, to_play b = p ->
@@ -27,10 +27,10 @@ Proof.
   - apply abelard_win; auto.
 Defined.
 
-Definition pforces {G : Game} (p : Player) (P Q : GameState G -> Prop) : Type :=
+Definition pforces {G : Game} (p : Player) (P Q : GameState G -> Type) : Type :=
   forall b, P b -> forces p Q b.
 
-Definition pforces_win {G : Game} : forall p (P : GameState G -> Prop),
+Definition pforces_win {G : Game} : forall p (P : GameState G -> Type),
   pforces p P (awin p) -> forall b, P b -> win p b.
 Proof.
   intros.
@@ -39,7 +39,7 @@ Proof.
   auto.
 Defined.
 
-Definition pforces_trans {G} (p : Player) : forall (P Q R : GameState G -> Prop),
+Definition pforces_trans {G} (p : Player) : forall (P Q R : GameState G -> Type),
   pforces p P Q -> pforces p Q R -> pforces p P R.
 Proof.
   intros P Q R fPQ fQR b Hb.
