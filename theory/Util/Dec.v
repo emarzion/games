@@ -1,4 +1,5 @@
 Require Compare_dec.
+Require Import List.
 
 Definition decision (P : Prop) : Type :=
   {P} + {~P}.
@@ -126,3 +127,21 @@ Proof.
     elim HPx.
     exists x; auto.
 Defined.
+
+Lemma in_dec {X} `{Discrete X} (x : X) (xs : list X) :
+  { In x xs } + { ~ In x xs }.
+Proof.
+  induction xs as [|x' xs']; simpl.
+  - now right.
+  - destruct (eq_dec x' x).
+    + left; now left.
+    + destruct IHxs'.
+      * left; now right.
+      * right; intros [|]; contradiction.
+Defined.
+
+Definition in_decb {X} `{Discrete X} (x : X) (xs : list X) : bool :=
+  match in_dec x xs with
+  | left _ => true
+  | right _ => false
+  end.
