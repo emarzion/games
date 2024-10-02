@@ -2,15 +2,20 @@ Require Import Games.Game.Game.
 Require Import Games.Game.Player.
 Require Import Games.Game.Strategy.
 Require Import Games.Game.Win.
+Require Import Games.Game.NoWorse.
 
 CoInductive draw {G : Game} : GameState G -> Type :=
   | atom_draw : forall s,
+      (* stalemate *)
       atomic_res s = Some Draw ->
       draw s
   | play_draw : forall s p,
       to_play s = p ->
+      (* ongoing *)
       atomic_res s = None ->
-      (forall m, draw (exec_move s m) + win (opp p) (exec_move s m)) ->
+      (* opponent at least draws for any move current player makes *)
+      (forall m, no_worse (opp p) (exec_move s m)) ->
+      (* there is a move that draws *)
       forall m, draw (exec_move s m) ->
       draw s.
 
@@ -21,14 +26,55 @@ Proof.
   induction w; intro d.
   - destruct d; congruence.
   - destruct d; try congruence.
-    destruct (s0 m).
-    + auto.
-    + apply (opp_no_fp p).
-      assert (p0 = p) as Hp by congruence; rewrite Hp in *; clear Hp.
-      eapply unique_winner; eauto.
+    specialize (n m).
+    elim (no_worse_not_loss (opp p0) (exec_move s m)); auto.
+    rewrite opp_invol; congruence.
   - destruct d; try congruence.
     exact (H m d).
 Qed.
+
+CoFixpoint draw_no_worse {G : Game} : forall (p : Player) (s : GameState G),
+  draw s -> no_worse p s.
+Proof.
+  intros p s d.
+  destruct d.
+  - apply atom_draw_no_worse.
+    exact e.
+  - destruct (player_id_or_opp_r_t (to_play s) p).
+    + eapply eloise_no_worse; auto.
+      apply draw_no_worse.
+      exact d.
+    + apply abelard_no_worse; auto.
+      intro m'.
+      rewrite e in e1.
+      rewrite e1 in n.
+      rewrite opp_invol in n.
+      apply n.
+Defined.
+
+CoFixpoint both_no_worse_draw {G : Game} p (s : GameState G) :
+  no_worse p s -> no_worse (opp p) s -> draw s.
+Proof.
+  intros n n'.
+  destruct n.
+  - apply atom_draw; auto.
+  - destruct n'; try congruence.
+    elim (opp_no_fp p); congruence.
+  - destruct n'; try congruence.
+    + elim (opp_no_fp p); congruence.
+    + eapply play_draw with (p := p); auto.
+      eapply both_no_worse_draw.
+      * exact n.
+      * apply n0.
+  - destruct n'; try congruence.
+    + eapply play_draw with (p := opp p); auto.
+      * rewrite opp_invol; auto.
+      * eapply both_no_worse_draw.
+        -- exact n'.
+        -- rewrite opp_invol.
+           apply n.
+    + elim (opp_no_fp (opp p)); congruence.
+Defined.
 
 CoFixpoint strategy_of_draw {G : Game} {p : Player} {s : GameState G}
   (d : draw s) : strategy p s.
@@ -45,13 +91,11 @@ Proof.
       * exact e0.
       * exact e1.
       * intro m'.
-        destruct (s0 m').
-        ** eapply strategy_of_draw; auto.
-        ** apply strategy_of_win.
-           rewrite e in e1.
-           rewrite e1 in w.
-           rewrite opp_invol in w.
-           exact w.
+        apply strategy_of_no_worse.
+        rewrite <- e in n.
+        rewrite e1 in n.
+        rewrite opp_invol in n.
+        exact (n m').
 Defined.
 
 CoFixpoint strategy_of_draw_correct {G : Game} {p : Player} (s : GameState G)
@@ -68,10 +112,5 @@ Proof.
       apply strategy_of_draw_correct.
     + constructor.
       intro.
-      destruct (s0 m0).
-      * left.
-        apply strategy_of_draw_correct.
-      * right.
-        simpl.
-        apply strategy_of_win_correct.
+      apply strategy_of_no_worse_correct.
 Qed.

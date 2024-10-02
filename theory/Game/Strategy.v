@@ -46,6 +46,22 @@ Inductive winning_strategy {G : Game} (p : Player) : forall {s : GameState G},
       (forall m, winning_strategy p (strs m)) ->
       winning_strategy p (abelard_strategy res_pf play_pf strs).
 
+CoInductive no_worse_strategy {G : Game} (p : Player) : forall {s : GameState G},
+  strategy p s -> Prop :=
+  | atom_strat_draw_no_worse : forall s (res_pf : atomic_res s = Some Draw),
+      no_worse_strategy p (atom_strategy res_pf)
+  | atom_strat_win_no_worse : forall s (res_pf : atomic_res s = Some (Win p)),
+      no_worse_strategy p (atom_strategy res_pf)
+  | eloise_strat_no_worse : forall s (res_pf : atomic_res s = None)
+      (play_pf : to_play s = p) (m : Move s)
+      (str : strategy p (exec_move s m)), no_worse_strategy p str ->
+      no_worse_strategy p (eloise_strategy res_pf play_pf m str)
+  | abelard_strat_no_worse : forall s (res_pf : atomic_res s = None)
+      (play_pf : to_play s = opp p)
+      (strs : forall m, strategy p (exec_move s m)),
+      (forall m, no_worse_strategy p (strs m)) ->
+      no_worse_strategy p (abelard_strategy res_pf play_pf strs).
+
 CoInductive drawing_strategy {G : Game} (p : Player) : forall {s : GameState G},
   strategy p s -> Prop :=
   | atom_strat_draw : forall s (res_pf : atomic_res s = Some Draw),
@@ -57,5 +73,5 @@ CoInductive drawing_strategy {G : Game} (p : Player) : forall {s : GameState G},
   | abelard_strat_draw : forall s (res_pf : atomic_res s = None)
       (play_pf : to_play s = opp p)
       (strs : forall m, strategy p (exec_move s m)),
-      (forall m, drawing_strategy p (strs m) \/ winning_strategy p (strs m)) ->
+      (forall m, no_worse_strategy p (strs m)) ->
       drawing_strategy p (abelard_strategy res_pf play_pf strs).
