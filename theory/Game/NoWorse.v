@@ -83,3 +83,40 @@ Proof.
     intro.
     apply strategy_of_no_worse_correct.
 Qed.
+
+Record trap {G : Game} (p : Player) (P : GameState G -> Type) : Type := {
+  trap_eloise : forall s,
+    P s ->
+    to_play s = p ->
+    atomic_res s = None -> { m : Move s & P (exec_move s m) };
+  trap_abelard : forall s,
+    P s ->
+    to_play s = opp p ->
+    atomic_res s = None -> forall m, P (exec_move s m);
+  opp_wins_disjoint : forall s, P s -> atomic_res s <> Some (Win (opp p))
+  }.
+
+Arguments trap_eloise {_} {_} {_} _ _.
+Arguments trap_abelard {_} {_} {_} _ _.
+Arguments opp_wins_disjoint {_} {_} {_} _ _.
+
+CoFixpoint trap_no_worse {G} p (P : GameState G -> Type) (tr : trap p P) : forall s,
+  P s -> no_worse p s.
+Proof.
+  intros s Hs.
+  destruct (atomic_res s) as [[p'|]|] eqn:s_res.
+  - destruct (player_id_or_opp_r_t p' p); subst.
+    + apply atom_win_no_worse; auto.
+    + elim (opp_wins_disjoint tr s); auto.
+  - apply atom_draw_no_worse; auto.
+  - destruct (player_id_or_opp_r_t (to_play s) p).
+    + destruct (trap_eloise tr s Hs e s_res) as [m Hm].
+      apply eloise_no_worse with (m := m); auto.
+      eapply trap_no_worse; [exact tr|].
+      exact Hm.
+    + apply abelard_no_worse; auto.
+      intro m.
+      eapply trap_no_worse; [exact tr|].
+      apply (trap_abelard tr s); auto.
+Defined.
+
